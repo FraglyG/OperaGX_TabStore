@@ -119,11 +119,20 @@ document.addEventListener("DOMContentLoaded", () => {
     refreshButton.addEventListener('click', async () => {
         console.log("Refreshing Tabs")
 
+        const currentWorkspace = await getCurrentWorkspaceId();
+        if (currentWorkspace == undefined) {
+            console.error('No workspace found');
+            return;
+        };
+
         const tabs = await chrome.tabs.query({});
 
         const refreshTabs = async (tabs: chrome.tabs.Tab[]) => {
             for (let i = 0; i < tabs.length; i++) {
                 const tab = tabs[i];
+                const tabWorkspaceId = (tab as any).workspaceId;
+                
+                if (tabWorkspaceId != currentWorkspace) continue;
                 if (tab.id == undefined) continue;
 
                 chrome.tabs.reload(tab.id);

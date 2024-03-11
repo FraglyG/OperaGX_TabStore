@@ -95,4 +95,33 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("Tabs restored");
         });
     }));
+    // tab refresher
+    const refreshButton = document.getElementById('refreshButton');
+    refreshButton.addEventListener('click', () => __awaiter(void 0, void 0, void 0, function* () {
+        console.log("Refreshing Tabs");
+        const currentWorkspace = yield getCurrentWorkspaceId();
+        if (currentWorkspace == undefined) {
+            console.error('No workspace found');
+            return;
+        }
+        ;
+        const tabs = yield chrome.tabs.query({});
+        const refreshTabs = (tabs) => __awaiter(void 0, void 0, void 0, function* () {
+            for (let i = 0; i < tabs.length; i++) {
+                const tab = tabs[i];
+                const tabWorkspaceId = tab.workspaceId;
+                if (tabWorkspaceId != currentWorkspace)
+                    continue;
+                if (tab.id == undefined)
+                    continue;
+                chrome.tabs.reload(tab.id);
+                // wait 3 seconds every 5 tabs to avoid rate limiting
+                if ((i + 1) % 5 == 0) {
+                    yield new Promise((resolve) => setTimeout(resolve, 3000));
+                }
+            }
+        });
+        refreshTabs(tabs);
+        console.log("Tabs Refreshed");
+    }));
 });
