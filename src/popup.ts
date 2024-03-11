@@ -112,4 +112,31 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("Tabs restored")
         });
     });
+
+    // tab refresher
+    const refreshButton = document.getElementById('refreshButton') as HTMLButtonElement;
+
+    refreshButton.addEventListener('click', async () => {
+        console.log("Refreshing Tabs")
+
+        const tabs = await chrome.tabs.query({});
+
+        const refreshTabs = async (tabs: chrome.tabs.Tab[]) => {
+            for (let i = 0; i < tabs.length; i++) {
+                const tab = tabs[i];
+                if (tab.id == undefined) continue;
+
+                chrome.tabs.reload(tab.id);
+
+                // wait 3 seconds every 5 tabs to avoid rate limiting
+                if ((i + 1) % 5 == 0) {
+                    await new Promise((resolve) => setTimeout(resolve, 3000));
+                }
+            }
+        };
+
+        refreshTabs(tabs);
+
+        console.log("Tabs Refreshed")
+    });
 })
