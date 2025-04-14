@@ -87,6 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Tabs saved")
     });
 
+    // Restore from last save
     restoreButton.addEventListener('click', async () => {
         console.log("Initiating Restore")
 
@@ -113,6 +114,48 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // Restore from TXT
+    const restoreFromTxtButton = document.getElementById('restoreFromTxtButton') as HTMLButtonElement;
+
+    restoreFromTxtButton.addEventListener('click', async () => {
+        console.log("Initiating Restore from TXT")
+
+        const currentWorkspace = await getCurrentWorkspaceId();
+        if (currentWorkspace == undefined) {
+            console.error('No workspace found');
+            return;
+        };
+
+        console.log("restoring tabs from txt")
+
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.txt';
+        input.onchange = async (event) => {
+            const file = (event.target as HTMLInputElement).files?.[0];
+            if (!file) {
+                console.error('No file selected');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const text = e.target?.result as string;
+                const tabs: PackagedTab[] = JSON.parse(text);
+
+                tabs.forEach((tab: PackagedTab) => {
+                    if (tab.workspaceId != currentWorkspace) return;
+                    chrome.tabs.create({ url: tab.url });
+                });
+
+                input.remove(); // remove the input element after use
+                console.log("Tabs restored from txt")
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    })
+
     // tab refresher
     const refreshButton = document.getElementById('refreshButton') as HTMLButtonElement;
 
@@ -131,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
             for (let i = 0; i < tabs.length; i++) {
                 const tab = tabs[i];
                 const tabWorkspaceId = (tab as any).workspaceId;
-                
+
                 if (tabWorkspaceId != currentWorkspace) continue;
                 if (tab.id == undefined) continue;
 
