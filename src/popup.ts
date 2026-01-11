@@ -8,7 +8,10 @@ type PackagedTab = {
 
 const RESET_TABS_ON_LOAD = false;
 
-function getCurrentWorkspaceId(): Promise<string | undefined> {
+function getCurrentWorkspaceId(): Promise<string | undefined> | string | undefined {
+    const isOperaGX = navigator.userAgent.includes("OPR/") || navigator.userAgent.includes("Opera/");
+    if (!isOperaGX) return "default"; // workspaces are only supported on OperaGX I think
+
     return new Promise((resolve) => {
         console.log("Getting current workspace")
 
@@ -57,7 +60,7 @@ async function saveTabs(workspaceId: string) {
 
     const blob = new Blob([fileContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-    
+
     chrome.downloads.download({
         url: url,
         filename: fileName,
