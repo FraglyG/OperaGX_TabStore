@@ -48,7 +48,7 @@ async function saveTabs(workspaceId: string) {
     const tabs = await chrome.tabs.query({})
 
     const packagedTabs = tabs.map((tab) => {
-        const tabWorkspaceId = (tab as any).workspaceId;
+        const tabWorkspaceId = (tab as any).workspaceId || "default";
         if (tabWorkspaceId != workspaceId) return;
         return packageTab(tab);
     }).filter((tab) => tab != undefined) as PackagedTab[];
@@ -153,8 +153,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const tabs: PackagedTab[] = JSON.parse(text);
 
                 tabs.forEach((tab: PackagedTab) => {
-                    if (tab.workspaceId != currentWorkspace) return;
-                    chrome.tabs.create({ url: tab.url });
+                    if (tab.workspaceId == currentWorkspace) {
+                        chrome.tabs.create({ url: tab.url });
+                    }
                 });
 
                 input.remove(); // remove the input element after use

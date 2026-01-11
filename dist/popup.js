@@ -44,7 +44,7 @@ function saveTabs(workspaceId) {
     return __awaiter(this, void 0, void 0, function* () {
         const tabs = yield chrome.tabs.query({});
         const packagedTabs = tabs.map((tab) => {
-            const tabWorkspaceId = tab.workspaceId;
+            const tabWorkspaceId = tab.workspaceId || "default";
             if (tabWorkspaceId != workspaceId)
                 return;
             return packageTab(tab);
@@ -132,9 +132,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const text = (_a = e.target) === null || _a === void 0 ? void 0 : _a.result;
                 const tabs = JSON.parse(text);
                 tabs.forEach((tab) => {
-                    if (tab.workspaceId != currentWorkspace)
-                        return;
-                    chrome.tabs.create({ url: tab.url });
+                    if (tab.workspaceId == currentWorkspace) {
+                        chrome.tabs.create({ url: tab.url });
+                    }
                 });
                 input.remove(); // remove the input element after use
                 console.log("Tabs restored from txt");
