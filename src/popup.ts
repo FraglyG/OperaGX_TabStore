@@ -55,7 +55,13 @@ async function saveTabs(workspaceId: string) {
     const fileName = `tabs_${workspaceId}_${yearMonthDay}.txt`;
     const fileContent = JSON.stringify(packagedTabs, null, 2);
 
-    chrome.runtime.sendMessage({ event: "downloadtxt", text: fileContent, name: fileName });
+    const blob = new Blob([fileContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    
+    chrome.downloads.download({
+        url: url,
+        filename: fileName,
+    });
 
     await updateTabStorage(workspaceId, packagedTabs);
 }
