@@ -10,6 +10,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 const RESET_TABS_ON_LOAD = false;
 function getCurrentWorkspaceId() {
+    const isOperaGX = navigator.userAgent.includes("OPR/") || navigator.userAgent.includes("Opera/");
+    if (!isOperaGX)
+        return "default"; // workspaces are only supported on OperaGX I think
     return new Promise((resolve) => {
         console.log("Getting current workspace");
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -32,7 +35,7 @@ function packageTab(tab) {
 function updateTabStorage(workspaceId, tabs) {
     return __awaiter(this, void 0, void 0, function* () {
         const oldTabStore = yield chrome.storage.local.get('TabStore');
-        const newTabStore = Object.assign(Object.assign({}, oldTabStore.TabStore), { [workspaceId]: tabs });
+        const newTabStore = Object.assign(Object.assign({}, (oldTabStore.TabStore || {})), { [workspaceId]: tabs });
         console.log(newTabStore);
         chrome.storage.local.set({ TabStore: newTabStore });
     });
@@ -50,7 +53,12 @@ function saveTabs(workspaceId) {
         const yearMonthDay = new Date().toISOString().split('T')[0];
         const fileName = `tabs_${workspaceId}_${yearMonthDay}.txt`;
         const fileContent = JSON.stringify(packagedTabs, null, 2);
-        chrome.runtime.sendMessage({ event: "downloadtxt", text: fileContent, name: fileName });
+        const blob = new Blob([fileContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        chrome.downloads.download({
+            url: url,
+            filename: fileName,
+        });
         yield updateTabStorage(workspaceId, packagedTabs);
     });
 }
@@ -74,6 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
         yield saveTabs(currentWorkspace);
         console.log("Tabs saved");
     }));
+    // Restore from last save
     restoreButton.addEventListener('click', () => __awaiter(void 0, void 0, void 0, function* () {
         console.log("Initiating Restore");
         const currentWorkspace = yield getCurrentWorkspaceId();
@@ -84,7 +93,8 @@ document.addEventListener("DOMContentLoaded", () => {
         ;
         console.log("restoring tabs");
         chrome.storage.local.get('TabStore', (result) => {
-            const tabs = result.TabStore[currentWorkspace];
+            var _a;
+            const tabs = (_a = result.TabStore) === null || _a === void 0 ? void 0 : _a[currentWorkspace];
             if (tabs == undefined) {
                 console.warn('No tabs found for workspace');
                 return;
@@ -94,6 +104,44 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             console.log("Tabs restored");
         });
+    }));
+    // Restore from TXT
+    const restoreFromTxtButton = document.getElementById('restoreFromTxtButton');
+    restoreFromTxtButton.addEventListener('click', () => __awaiter(void 0, void 0, void 0, function* () {
+        console.log("Initiating Restore from TXT");
+        const currentWorkspace = yield getCurrentWorkspaceId();
+        if (currentWorkspace == undefined) {
+            console.error('No workspace found');
+            return;
+        }
+        ;
+        console.log("restoring tabs from txt");
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.txt';
+        input.onchange = (event) => __awaiter(void 0, void 0, void 0, function* () {
+            var _a;
+            const file = (_a = event.target.files) === null || _a === void 0 ? void 0 : _a[0];
+            if (!file) {
+                console.error('No file selected');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a;
+                const text = (_a = e.target) === null || _a === void 0 ? void 0 : _a.result;
+                const tabs = JSON.parse(text);
+                tabs.forEach((tab) => {
+                    if (tab.workspaceId != currentWorkspace)
+                        return;
+                    chrome.tabs.create({ url: tab.url });
+                });
+                input.remove(); // remove the input element after use
+                console.log("Tabs restored from txt");
+            });
+            reader.readAsText(file);
+        });
+        input.click();
     }));
     // tab refresher
     const refreshButton = document.getElementById('refreshButton');

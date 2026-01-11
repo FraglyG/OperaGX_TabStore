@@ -1,5 +1,21 @@
 {
-  "dependencies": {
-    "@types/chrome": "^0.0.260"
-  }
+  "name": "tabstore",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {
+    "@types/chrome": "^0.1.33",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FraglyG/OperaGX_TabStore.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
 }

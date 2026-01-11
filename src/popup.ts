@@ -37,7 +37,7 @@ function packageTab(tab: chrome.tabs.Tab): PackagedTab {
 
 async function updateTabStorage(workspaceId: string, tabs: PackagedTab[]) {
     const oldTabStore = await chrome.storage.local.get('TabStore')
-    const newTabStore = { ...oldTabStore.TabStore, [workspaceId]: tabs }
+    const newTabStore = { ...(oldTabStore.TabStore || {}), [workspaceId]: tabs }
 
     console.log(newTabStore);
 
@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("restoring tabs")
 
         chrome.storage.local.get('TabStore', (result) => {
-            const tabs = result.TabStore[currentWorkspace];
+            const tabs = (result.TabStore as any)?.[currentWorkspace];
             if (tabs == undefined) {
                 console.warn('No tabs found for workspace');
                 return;
